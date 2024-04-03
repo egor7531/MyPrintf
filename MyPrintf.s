@@ -44,7 +44,7 @@ _pc:            cmp byte [rbp+1], '%'
                 jmp D
 
 _d:             cmp byte [rbp+1], 'd'
-                jne _s 
+                jne _c
 
                 inc bx
                 mov r9, [rsp+8*rbx]
@@ -77,6 +77,15 @@ _d:             cmp byte [rbp+1], 'd'
                 call print_string 
                 jmp D
 
+_c:             cmp word [rbp+1], 'с'
+                jne _s
+
+                inc bx
+                mov rsi, [rsp+8*rbx]
+                mov rdx, 1
+                call print_string
+                jmp D 
+
 _s:             inc bx
                 mov rcx, -1
                 mov rdi, [rsp+8*rbx] 
@@ -90,7 +99,11 @@ _s:             inc bx
                 jmp D
 
 ; return 0
-Done:           mov rax, 0x3C      
+Done:           mov rsi, entr
+                mov rdx, 1
+                call print_string
+
+                mov rax, 0x3C      
                 xor rdi, rdi
                 syscall
 
@@ -109,10 +122,11 @@ print_string:   mov rax, 0x1
 ;---------------------------------------------------------------------------------------------------------------------------
 section .data
 
-formatStr       db      "%d %d %s", 0
-arg1            dd      23
+formatStr       db      "%c %d Hello %s", 0
+arg1            db      30
 arg2            dd      3
 arg3            db      "Egorik", 0                                    ;    -2^31 (-2147483648) <= x <= 2^31 - 1 (2147483647)
 arrNumber       times  11 db 0
 percent         db      '%'
+entr            db      10
 ;---------------------------------------------------------------------------------------------------------------------------
