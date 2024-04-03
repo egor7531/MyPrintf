@@ -8,6 +8,7 @@ global _start
 
 _start:         
 ;fill the stack
+                push arg3
                 push arg2
                 push arg1
                 push formatStr
@@ -34,15 +35,49 @@ B:              mov rsi, r8
                 cmp byte [rbp], 0
                 je Done
 
-E:              cmp byte [rbp+1], '%'
-                jne C
+_pc:            cmp byte [rbp+1], '%'
+                jne _d
 
                 mov rsi, percent
                 mov rdx, 1
                 call print_string
                 jmp D
 
-C:              inc bx
+_d:             cmp byte [rbp+1], 'd'
+                jne _s 
+
+                inc bx
+                mov r9, [rsp+8*rbx]
+
+                mov rcx, 10
+                xor r10, r10
+        M:      mov rdi, arrNumber
+                add rdi, r10
+                inc r10
+                mov byte [rdi], 0
+                loop M
+
+                mov eax, dword [r9]
+                xor r10b, r10b
+                mov r9, 10
+        N:      xor rdx, rdx
+                div r9d
+                add dl, 48
+                mov rdi, arrNumber+10
+                sub rdi, r10
+
+                mov [rdi], dl
+
+                inc r10b
+                cmp eax, 0
+                jne N
+
+                mov rsi, arrNumber
+                mov rdx, 11
+                call print_string 
+                jmp D
+
+_s:             inc bx
                 mov rcx, -1
                 mov rdi, [rsp+8*rbx] 
                 xor rax, rax
@@ -71,9 +106,13 @@ print_string:   mov rax, 0x1
 
                 ret
 
+;---------------------------------------------------------------------------------------------------------------------------
 section .data
 
-formatStr       db      "%%%", 0
-arg1            db      "Egorik", 0
-arg2            db      65
+formatStr       db      "%d %d %s", 0
+arg1            dd      23
+arg2            dd      3
+arg3            db      "Egorik", 0                                    ;    -2^31 (-2147483648) <= x <= 2^31 - 1 (2147483647)
+arrNumber       times  11 db 0
 percent         db      '%'
+;---------------------------------------------------------------------------------------------------------------------------
