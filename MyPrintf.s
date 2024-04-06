@@ -8,9 +8,7 @@ global _start
 
 _start:         
 ;fill the stack
-                push arg3
-                push arg2
-                push arg1
+                push number
                 push formatStr
                 
                 mov rbx, 0                       
@@ -49,40 +47,56 @@ _d:             cmp byte [rbp+1], 'd'
                 inc bx
                 mov r9, [rsp+8*rbx]
 
-                mov rcx, 10
-                xor r10, r10
-        M:      mov rdi, arrNumber
-                add rdi, r10
-                inc r10
-                mov byte [rdi], 0
-                loop M
-
                 mov eax, dword [r9]
-                xor r10b, r10b
-                mov r9, 10
-        N:      xor rdx, rdx
+                rol eax, 1
+                test eax, 1
+                ror eax, 1
+                jz L
+
+                neg eax
+                mov rsi, minus
+                mov rdx, 1                              
+                call print_string
+
+        L:      mov r9, 10
+
+        K:      xor edx, edx 
                 div r9d
-                add dl, 48
-                mov rdi, arrNumber+10
-                sub rdi, r10
-
-                mov [rdi], dl
-
-                inc r10b
+                push rax
+                push rdx
+                mov rax, r10 
+                mul r9
+                mov r10, rax
+                pop rdx
+                pop rax
+                add r10, rdx
+                inc cl
                 cmp eax, 0
-                jne N
+                jne K
+        W:        
+                mov rax, r10
+                mov r10, rcx
+        Z:      xor dl, dl
+                div r9
+                add dl, '0'
+                mov [symbol], dl
 
-                mov rsi, arrNumber
-                mov rdx, 11
-                call print_string 
+                mov rsi, symbol
+                mov rdx, 1                              
+                call print_string
+                dec r10b
+
+                cmp r10b, 0
+                jne Z
+
                 jmp D
 
-_c:             cmp word [rbp+1], 'с'
+_c:             cmp byte [rbp+1], 'c'
                 jne _s
 
                 inc bx
                 mov rsi, [rsp+8*rbx]
-                mov rdx, 1
+                mov rdx, 1                              
                 call print_string
                 jmp D 
 
@@ -98,12 +112,11 @@ _s:             inc bx
                 call print_string 
                 jmp D
 
-; return 0
 Done:           mov rsi, entr
                 mov rdx, 1
                 call print_string
 
-                mov rax, 0x3C      
+                mov rax, 0x3C                           ; return 0
                 xor rdi, rdi
                 syscall
 
@@ -113,20 +126,29 @@ Done:           mov rsi, entr
 ; Destroy: rax, rdi	
 ; Returns: -
 ;---------------------------------------------------------------------------------------------------------------------------
-print_string:   mov rax, 0x1            
-                mov rdi, 1
-                syscall
+print_string:   push rax 
+                push rdi
 
+                mov rax, 1            
+                mov rdi, 1
+                syscall                                 ; syscal 0x1 - change value of 'rcx'
+
+                pop rdi 
+                pop rax
                 ret
 
 ;---------------------------------------------------------------------------------------------------------------------------
 section .data
 
-formatStr       db      "%c %d Hello %s", 0
-arg1            db      30
-arg2            dd      3
-arg3            db      "Egorik", 0                                    ;    -2^31 (-2147483648) <= x <= 2^31 - 1 (2147483647)
-arrNumber       times  11 db 0
+formatStr        db      "%d", 0
+;arg0            db      66
+;arg1            db      "Egorik", 0
+;arg2            db      '.'
+number           dd      -38973549822398                                  ;    -2^31 (-2147483648) <= x <= 2^31 - 1 (2147483647)
+
 percent         db      '%'
 entr            db      10
+minus           db      '-'
+symbol          db      0
+;check           equ     
 ;---------------------------------------------------------------------------------------------------------------------------
